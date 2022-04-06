@@ -1,0 +1,87 @@
+---
+title: "On the Use of Causal Models for Designing Experiments in the Automotive Domain - EASE 2022"
+header-includes: \usepackage{fvextra} \DefineVerbatimEnvironment{Highlighting}{Verbatim}{breaklines,commandchars=\\\{\}}
+author: "David Issa Mattos and Yuchu Liu"
+date: '2022-04-05'
+output: html_document
+---
+
+Libraries used for the DAG analysis
+```{r message=F, warning=F}
+library(tidyverse)
+library(dagitty)
+library(ggdag)
+knitr::opts_chunk$set(cache=TRUE) #cache results
+```
+
+# Creating a DAG
+
+Here we model all causal relations
+```{r}
+climate_dag <- dagify(
+  vehicle_variant ~ city,
+  climate_sw ~ vehicle_variant + rnd,
+  energy ~ city + vehicle_variant + climate_sw + temperature_setting,
+  temperature_setting ~ climate_performance + climate_preferences,
+  climate_performance ~ climate_sw + climate_preferences,
+  climate_preferences ~ city)
+```
+
+
+Double check that the DAG is acyclic
+```{r}
+dagitty::isAcyclic(climate_dag)
+```
+
+
+# Analysis of the DAG
+
+## What variables should we restrict to run an A/B test?
+
+To see what adjustments are necessary to compute an unbiased total causal effect (i.e. run an A/B test)
+
+```{r}
+adjustmentSets(climate_dag, 
+               effect = 'total',   
+               exposure = 'climate_sw', 
+               outcome = 'energy')
+```
+
+## Checking the conditional independences
+
+Here we check what relations should be independent. Note that we can only check with data the conditional independence of the variables that are observed.
+
+```{r echo=F, results='hide', message=F}
+#Since the package by default abbreviates the names and have no option to remove this. We will do a small hack to remove this functionality. We will modify the base function abbreviate to ignore the abbreviations created
+trace(abbreviate, quote(minlength <- 20), at=1L, print=FALSE)
+# trace(abbreviate, quote(x<-full_names), at=12L, print=FALSE)
+```
+
+```{r}
+dagitty::impliedConditionalIndependencies(climate_dag, max.results = 200)
+```
+
+We can see some common conditional independence relations:
+
+* (energy _||_ rnd | climate_sw, vehicle_variant) is equivalent to an A/A test on the main metric
+* (temperature_setting _||_ vehicle_variant | city, climate_sw) is equivalent to the A/A test on the guardrail metric
+* (rnd _||_ vehicle_variant) is equivalent to SRM in a the restricted groups
+* (city _||_ rnd) is equivalent to SRM in one of the strata variables
+
+The actual SRM criteria on the treatment assignment is for checking that the arrow between randomization and the treatment is actually as designed (since this is an artificially introduced variable on the DAG).
+
+## Direct and Indirect effects
+
+Let's compute the direct effect
+
+```{r}
+adjustmentSets(climate_dag, 
+               effect = 'direct',   
+               exposure = 'climate_sw', 
+               outcome = 'energy')
+```
+We can use only the first adjustment set, since the others contain non-observable or latent variable.
+
+Assuming linearity in the causal effect, the indirect effect is:
+
+$$\text{Total} = \text{Direct} + \text{Indirect}$$
