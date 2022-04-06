@@ -1,6 +1,6 @@
 # EASE 2022 - Online appendix
 
-This is a repository for the paper 'On the Use of Causal Models for Designing Experiments in the
+This is a repository for the paper 'On the Use of Causal Graphical Models for Designing Experiments in the
 Automotive Domain' by David Issa Mattos and Yuchu Liu
 
 How to use: 

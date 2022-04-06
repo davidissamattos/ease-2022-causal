@@ -1,5 +1,5 @@
 ---
-title: "On the Use of Causal Models for Designing Experiments in the Automotive Domain - EASE 2022"
+title: "On the Use of Causal Graphical Models for Designing Experiments in the Automotive Domain - EASE 2022"
 header-includes: \usepackage{fvextra} \DefineVerbatimEnvironment{Highlighting}{Verbatim}{breaklines,commandchars=\\\{\}}
 author: "David Issa Mattos and Yuchu Liu"
 date: '2022-04-05'
