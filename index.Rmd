@@ -85,3 +85,9 @@ We can use only the first adjustment set, since the others contain non-observabl
 Assuming linearity in the causal effect, the indirect effect is:
 
 $$\text{Total} = \text{Direct} + \text{Indirect}$$
+
+# Session information
+```{r}
+sessionInfo()
+```
+
